@@ -27,6 +27,8 @@
 using System;
 using System.ComponentModel;
 using System.Text;
+using System.Diagnostics;
+using System.Management;
 using System.Runtime.InteropServices;
 
 namespace WcJvmApp
@@ -264,27 +266,26 @@ namespace WcJvmApp
 
             Console.WriteLine("Windows Container JVM Launcher v1.0");
 
-            var cpuInfo = Program.QueryCpuRateControlInformation();
-
-            // print cpuInfo
-            Console.WriteLine("CpuInfo: {0}", cpuInfo.ToString());
+            // Using System.Diagnostics to get processor count
+            int processorCount = Environment.ProcessorCount;
+            Console.WriteLine($"Number of Processors: {processorCount}");
 
             var memoryInfo = Program.QueryExtendedLimitInformation();
             // print result
             Console.WriteLine("JobMemoryLimit: {0}", memoryInfo.JobMemoryLimit);
-            Console.WriteLine("PerJobUserTimeLimit: {0}", memoryInfo.BasicLimitInformation.PerJobUserTimeLimit);
-            Console.WriteLine("PerProcessUserTimeLimit: {0}", memoryInfo.BasicLimitInformation.PerProcessUserTimeLimit);
 
             // Now prepare the java launcher arguments
             var javaArgs = new StringBuilder();
 
             // store JobMemoryLimit into a variable
             var jobMemoryLimit = memoryInfo.JobMemoryLimit;
+            var originalJobMemoryLimit = jobMemoryLimit;
 
+/*
             // From the args array, find if there is a -XX:MaxRAMPercentage argument. If there is, then use that to calculate the memory limit
             // If there is no -XX:MaxRAMPercentage argument, then use the value from the job object
             var maxRamPercentage = 75.0;
-            
+
             if (argList.ContainsKey("MaxRAMPercentage"))
             {
                 maxRamPercentage = Double.Parse(argList["MaxRAMPercentage"]);
@@ -296,38 +297,71 @@ namespace WcJvmApp
             // Convert JobMemoryLimit from bytes to megabytes
             jobMemoryLimit = (UIntPtr)(jobMemoryLimit.ToUInt64() / 1024 / 1024);
 
-            // Now read how many processors are available for this jobobject
-            var numProcessors = memoryInfo.BasicLimitInformation.ActiveProcessLimit;
-            // print procs
-            Console.WriteLine("ActiveProcessLimit: {0}", numProcessors);
-
-            Console.WriteLine("LimitFlags {0}", memoryInfo.BasicLimitInformation.LimitFlags);
-
-            var doNotAppendXmx = false;
             if (jobMemoryLimit > 0)
             {
                 javaArgs.Append("-Xmx");
                 javaArgs.Append(jobMemoryLimit.ToUInt64());
                 javaArgs.Append("m");
             }
-            foreach (var arg in args)
-            {
-                if (arg.StartsWith("-Xmx"))
-                {
-                    doNotAppendXmx = true;
-                }
-                javaArgs.Append(" ");
-                javaArgs.Append(arg);
-            }
+
+            */
 
             // append ActiveProcessorCount in case one was not specified
-            if (numProcessors > 0)
+            if (processorCount > 0)
             {
                 javaArgs.Append(" -XX:ActiveProcessorCount=");
-                javaArgs.Append(numProcessors);
+                javaArgs.Append(processorCount);
+            }
+
+            javaArgs.Append($" -XX:MaxRAM={originalJobMemoryLimit}");
+
+            // Append all other args
+            foreach (var arg in args)
+            {
+                if (!arg.StartsWith("-Xmx") && !arg.StartsWith("-XX:MaxRAMPercentage") && !arg.StartsWith("-XX:ActiveProcessorCount"))
+                {
+                    javaArgs.Append(' ');
+                    javaArgs.Append(arg);
+                }
             }
             Console.WriteLine("Launching java with args: {0}", javaArgs.ToString());
-            //var javaProcess = System.Diagnostics.Process.Start("java", javaArgs.ToString());
+
+            var startInfo = new ProcessStartInfo("java", javaArgs.ToString())
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            Console.WriteLine("Java application started!");
+
+            // Start the Java application
+            using (Process process = Process.Start(startInfo))
+            {
+                // Set up asynchronous reading of standard output and error
+                process.OutputDataReceived += (sender, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                    {
+                        Console.WriteLine(e.Data);
+                    }
+                };
+
+                process.ErrorDataReceived += (sender, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                    {
+                        Console.Error.WriteLine(e.Data);
+                    }
+                };
+
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+
+                // Wait for the Java application to exit (optional, depending on your requirements)
+                process.WaitForExit();
+            }
         }
     }
 
