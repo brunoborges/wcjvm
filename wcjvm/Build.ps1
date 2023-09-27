@@ -22,3 +22,4 @@ docker run --memory=512m --cpus 2 --isolation=process -ti javaapp
 # MaxHeapSize                              = 402653184 (OK)
 # MaxMetaspaceExpansion                    = 5439488
 # MaxNewSize                               = 241172480 (BAD)
+# GC selection not happening as expected with MaxRAM configured manually.

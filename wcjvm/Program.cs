@@ -259,6 +259,27 @@ namespace WcJvmApp
             return result;
         }
 
+        public static string SelectGC(long memory, int procs)
+        {
+            if (procs < 2)
+            {
+                return "-XX:+UseSerialGC";
+            }
+
+            if (memory < 512L * 1024 * 1024)
+            {
+                return "-XX:+UseSerialGC";
+            }
+            else if (memory < 2048L * 1024 * 1024)
+            {
+                return "-XX:+UseParallelGC";
+            }
+            else
+            {
+                return "-XX:+UseG1GC";
+            }
+        }
+
         static void Main(string[] args)
         {
             // Convert args to a list
@@ -281,49 +302,41 @@ namespace WcJvmApp
             var jobMemoryLimit = memoryInfo.JobMemoryLimit;
             var originalJobMemoryLimit = jobMemoryLimit;
 
-/*
-            // From the args array, find if there is a -XX:MaxRAMPercentage argument. If there is, then use that to calculate the memory limit
-            // If there is no -XX:MaxRAMPercentage argument, then use the value from the job object
-            var maxRamPercentage = 75.0;
-
-            if (argList.ContainsKey("MaxRAMPercentage"))
-            {
-                maxRamPercentage = Double.Parse(argList["MaxRAMPercentage"]);
-            }
-
-            // Calculate the memory limit based on the percentage
-            jobMemoryLimit = (UIntPtr)(jobMemoryLimit.ToUInt64() * maxRamPercentage / 100.0);
-
-            // Convert JobMemoryLimit from bytes to megabytes
-            jobMemoryLimit = (UIntPtr)(jobMemoryLimit.ToUInt64() / 1024 / 1024);
-
-            if (jobMemoryLimit > 0)
-            {
-                javaArgs.Append("-Xmx");
-                javaArgs.Append(jobMemoryLimit.ToUInt64());
-                javaArgs.Append("m");
-            }
-
-            */
-
-            // append ActiveProcessorCount in case one was not specified
+            // Append ActiveProcessorCount in case one was not specified
             if (processorCount > 0)
             {
                 javaArgs.Append(" -XX:ActiveProcessorCount=");
                 javaArgs.Append(processorCount);
             }
 
+            // Append MaxRAM
             javaArgs.Append($" -XX:MaxRAM={originalJobMemoryLimit}");
 
-            // Append all other args
+            var foundGCManuallyConfigured = false;
+            // Append all other args, with a few exceptions
             foreach (var arg in args)
             {
-                if (!arg.StartsWith("-Xmx") && !arg.StartsWith("-XX:MaxRAMPercentage") && !arg.StartsWith("-XX:ActiveProcessorCount"))
+                if (!arg.StartsWith("-XX:MaxRAM") && !arg.StartsWith("-XX:ActiveProcessorCount"))
                 {
                     javaArgs.Append(' ');
                     javaArgs.Append(arg);
                 }
+
+                // Check if javaArgs has a GC flag
+                if ((arg.StartsWith("-XX:+Use") || arg.StartsWith("-XX:-Use")) && arg.Contains("GC"))
+                {
+                    // If it does, then remove it
+                    foundGCManuallyConfigured = true;
+                }
             }
+
+            if (foundGCManuallyConfigured == false)
+            {
+                // If no GC flag was found, then add one
+                javaArgs.Append(' ');
+                javaArgs.Append(SelectGC((int)jobMemoryLimit.ToUInt64(), processorCount));
+            }
+
             Console.WriteLine("Launching java with args: {0}", javaArgs.ToString());
 
             var startInfo = new ProcessStartInfo("java", javaArgs.ToString())

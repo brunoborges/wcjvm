@@ -2,6 +2,6 @@ FROM wcjvm
 
 WORKDIR /
 
-COPY App.class /
+COPY App.java /
 
-CMD [ "-XX:+UseG1GC", "App" ]
+CMD [ "App.java" ]
