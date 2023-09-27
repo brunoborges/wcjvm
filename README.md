@@ -4,7 +4,7 @@ This project is a proof of concept for a JVM launcher inside Windows Container.
 
 ## Why
 
-The OpenJDK HotSpot JVM is not Windows Container aware. For this reason, the JVM will thus not be able to identify the amount of CPU and Memory given to the container. This will result in the JVM ergonomically sizing itself based on the total amount of CPU and memory of the entire Windows host. Often, this translates into a JVM crash due to insufficient memory.
+The OpenJDK HotSpot JVM is not Windows Container aware (in [_Process Isolation Mode_](https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/hyperv-container#process-isolation)). For this reason, the JVM will thus not be able to identify the amount of CPU and Memory given to the container. This will result in the JVM ergonomically sizing itself based on the total amount of CPU and memory of the entire Windows host. Often, this translates into a JVM crash due to insufficient memory.
 
 Introducing... `wcjvm`.
 
