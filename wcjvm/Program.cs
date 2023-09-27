@@ -53,12 +53,6 @@ namespace WcJvmApp
             MaxJobObjectInfoClass,
         }
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern IntPtr GetCurrentProcess();
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool IsProcessInJob(IntPtr processHandle, IntPtr jobHandle, out bool result);
-
         [StructLayout(LayoutKind.Sequential)]
         public struct IO_COUNTERS
         {
@@ -74,55 +68,12 @@ namespace WcJvmApp
         public struct JOBOBJECT_EXTENDED_LIMIT_INFORMATION
         {
 
-            // write a toString for this struct
-            public override string ToString()
-            {
-                return string.Format("BasicLimitInformation: {0}, IoInfo: {1}, ProcessMemoryLimit: {2}, JobMemoryLimit: {3}, PeakProcessMemoryUsed: {4}, PeakJobMemoryUsed: {5}",
-                    BasicLimitInformation.ToString(), IoInfo.ToString(), ProcessMemoryLimit, JobMemoryLimit, PeakProcessMemoryUsed, PeakJobMemoryUsed);
-            }
             public JOBOBJECT_BASIC_LIMIT_INFORMATION BasicLimitInformation;
             public IO_COUNTERS IoInfo;
             public UIntPtr ProcessMemoryLimit;
             public UIntPtr JobMemoryLimit;
             public UIntPtr PeakProcessMemoryUsed;
             public UIntPtr PeakJobMemoryUsed;
-        }
-
-        // define the struct for the JOBOBJECT_CPU_RATE_CONTROL_INFORMATION
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        public struct JOBOBJECT_CPU_RATE_CONTROL_INFORMATION
-        {
-
-            // write a toString for this struct
-            public override string ToString()
-            {
-                return string.Format("ControlFlags: {0}, CpuRate: {1}, Weight: {2}, MinRate: {3}, MaxRate: {4}",
-                    ControlFlags, Union.CpuRate, Union.Weight, Union.DummyStructName.MinRate, Union.DummyStructName.MaxRate);
-            }
-
-            public UInt16 ControlFlags;
-
-            public JOBOBJECT_CPU_RATE_CONTROL_INFORMATION_UNION Union;
-
-            [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Ansi)]
-            public struct JOBOBJECT_CPU_RATE_CONTROL_INFORMATION_UNION
-            {
-                [FieldOffset(4)]
-                public UInt16 CpuRate;
-
-                [FieldOffset(4)]
-                public UInt16 Weight;
-
-                [FieldOffset(4)]
-                public JOBOBJECT_CPU_RATE_CONTROL_INFORMATION_DUMMYSTRUCTNAME DummyStructName;
-            }
-
-            [StructLayout(LayoutKind.Sequential)]
-            public struct JOBOBJECT_CPU_RATE_CONTROL_INFORMATION_DUMMYSTRUCTNAME
-            {
-                public ushort MinRate;
-                public ushort MaxRate;
-            }
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -147,47 +98,6 @@ namespace WcJvmApp
            UInt32 jobObjectInfoLength,
            ref UInt32 returnLength
            );
-
-        // Query for the JOBOBJECT_CPU_RATE_CONTROL_INFORMATION
-        public static JOBOBJECT_CPU_RATE_CONTROL_INFORMATION QueryCpuRateControlInformation()
-        {
-            // Allocate an JOBOBJECT_CPU_RATE_CONTROL_INFORMATION
-            int inSize = Marshal.SizeOf(typeof(Program.JOBOBJECT_CPU_RATE_CONTROL_INFORMATION));
-            IntPtr ptrData = IntPtr.Zero;
-            try
-            {
-                // Marshal.AllocHGlobal will throw on failure, so we do not need to
-                // check for allocation failure.
-                ptrData = Marshal.AllocHGlobal(inSize);
-                UInt32 outSize = 0;
-
-                // Query the job object for its CPU rate control information
-                bool result = Program.QueryInformationJobObject(IntPtr.Zero,
-                    Program.JOBOBJECTINFOCLASS.JobObjectCpuRateControlInformation,
-                    ptrData,
-                    (UInt32)inSize,
-                    ref outSize);
-                if (result)
-                {
-                    // Marshal the result data into a .NET structure
-                    // Return the CPU rate control information to the caller
-                    return
-                      (Program.JOBOBJECT_CPU_RATE_CONTROL_INFORMATION)Marshal.PtrToStructure(ptrData, typeof(Program.JOBOBJECT_CPU_RATE_CONTROL_INFORMATION));
-                }
-                else
-                {
-                    Console.WriteLine("QueryInformationJobObject failed with error {0}", Marshal.GetLastWin32Error());
-                    return new Program.JOBOBJECT_CPU_RATE_CONTROL_INFORMATION();
-                }
-            }
-            finally
-            {
-                if (ptrData != IntPtr.Zero)
-                {
-                    Marshal.FreeHGlobal(ptrData);
-                }
-            }
-        }
 
         // Query the extended limit information for the running job
         // If this is run outside of an executing job, or if the memory limit is not set,

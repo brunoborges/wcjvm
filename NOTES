@@ -1,0 +1,13 @@
+Other values to potentially consider adjusting manually
+# CompressedClassSpaceSize                 = 1073741824
+# HeapBaseMinAddress                       = 2147483648s
+# HeapSizePerGCThread                      = 43620760
+# InitialHeapSize                          = 402653184
+# LargePageHeapSizeThreshold               = 134217728
+# LargePageSizeInBytes                     = 0
+
+# MarkStackSizeMax                         = 536870912
+# MaxHeapSize                              = 402653184 (OK)
+# MaxMetaspaceExpansion                    = 5439488
+# MaxNewSize                               = 241172480 (BAD)
+# GC selection not happening as expected with MaxRAM configured manually.
