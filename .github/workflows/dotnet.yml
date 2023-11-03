@@ -30,8 +30,11 @@ jobs:
         .\Build.ps1
     - name: .NET Publish
       run: dotnet publish --configuration Release --output ./publish
-    - name: Configure Git user
-      run: |
-        git config user.email "actions@github.com"
-        git config user.name "GitHub Actions"
-        
+    - name: Upload binary to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ./wcjvm/out/net7.0/win-x64/wcjvm.exe
+        tag: ${{ github.ref }}
+        overwrite: true
+        body: "Release of wcjvm"
