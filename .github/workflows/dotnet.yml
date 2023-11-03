@@ -37,6 +37,7 @@ jobs:
         path: ./wcjvm/out/net7.0/win-x64/wcjvm.exe
     - name: Release
       uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
       with:
         files: "./wcjvm/out/net7.0/win-x64/wcjvm.exe"
       env:
