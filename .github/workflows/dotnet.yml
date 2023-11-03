@@ -35,3 +35,9 @@ jobs:
       with:
         name: wcjvm
         path: ./wcjvm/out/net7.0/win-x64/wcjvm.exe
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: "./wcjvm/out/net7.0/win-x64/wcjvm.exe"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
