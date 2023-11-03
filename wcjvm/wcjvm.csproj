@@ -5,19 +5,19 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0</TargetFramework>
     <PublishRelease>true</PublishRelease>
-    <PublishReadyToRun>true</PublishReadyToRun>
     <PublishTrimmed>true</PublishTrimmed>
     <OutputPath>out</OutputPath>
-    <PublishSingleFile>true</PublishSingleFile>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PlatformTarget>x64</PlatformTarget>
     <ImplicitUsings>enable</ImplicitUsings>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <Nullable>enable</Nullable>
+    <PublishAot>true</PublishAot>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Management" Version="7.0.2" />
+	  <ProjectCapability Include="NativeAOT" />
+	  <PackageReference Include="System.Management" Version="7.0.2" />
   </ItemGroup>
 
 </Project>
