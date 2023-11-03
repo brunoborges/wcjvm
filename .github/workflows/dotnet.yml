@@ -1,4 +1,4 @@
-name: .NET CI Build
+name: CI Build
 
 on:
   push:
@@ -28,3 +28,13 @@ jobs:
       run: |
         cd wcjvm
         .\Build.ps1
+    - name: .NET Publish
+      run: dotnet publish --configuration Release --output ./publish
+    - name: Create release
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest"
+        prerelease: true
+        title: "Development Build"
+        files: wcjvm/out/net7.0/win-x64/native/wcjvm.exe
