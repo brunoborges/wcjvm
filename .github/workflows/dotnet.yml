@@ -3,11 +3,15 @@ name: CI Build
 on:
   push:
     branches: [ "main" ]
+    tags:
+      - "v*.*.*"
   pull_request:
     branches: [ "main" ]
 
 jobs:
   build:
+    permissions:
+      contents: write
     runs-on: windows-latest
 
     steps:
