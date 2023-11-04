@@ -10,7 +10,7 @@ Introducing... `wcjvm`.
 
 ## wcjvm
 
-The `wcjvm`` command identifies the amount of CPU and Memory given to the container and will start the JVM with the appropriate parameters.
+The `wcjvm` command identifies the amount of CPU and Memory given to the container and will start the JVM with the appropriate parameters.
 
 In essence, `wcjvm` is a wrapper (or a shim) of the `java` command, specifically for launching the JVM from within a Windows container.
 
